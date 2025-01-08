@@ -273,3 +273,34 @@ function hello_elementor_child_widgets_init() {
     ) );
 }
 add_action( 'widgets_init', 'hello_elementor_child_widgets_init' );
+
+function enqueue_owl_carousel() {
+    // Thêm jQuery (nếu cần)
+    wp_enqueue_script('jquery');
+
+    // Thêm Owl Carousel CSS
+    wp_enqueue_style('owl-carousel-css', 'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css', array(), '2.3.4');
+    wp_enqueue_style('owl-carousel-theme', 'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css', array(), '2.3.4');
+
+    // Thêm Owl Carousel JS
+    wp_enqueue_script('owl-carousel-js', 'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js', array('jquery'), '2.3.4', true);
+
+    // Thêm script khởi tạo Owl Carousel
+    wp_add_inline_script('owl-carousel-js', "
+        jQuery(document).ready(function($) {
+            $('.owl-carousel').owlCarousel({
+                loop: true,
+                margin: 10,
+                nav: true,
+                autoplay: true,
+                autoplayTimeout: 3000,
+                responsive: {
+                    0: { items: 1 },
+                    600: { items: 2 },
+                    1000: { items: 3 }
+                }
+            });
+        });
+    ");
+}
+add_action('wp_enqueue_scripts', 'enqueue_owl_carousel');
