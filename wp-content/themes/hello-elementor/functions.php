@@ -274,33 +274,96 @@ function hello_elementor_child_widgets_init() {
 }
 add_action( 'widgets_init', 'hello_elementor_child_widgets_init' );
 
-function enqueue_owl_carousel() {
-    // Thêm jQuery (nếu cần)
+function add_bootstrap_to_wp() {
+    wp_enqueue_style('bootstrap-css', 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css');
+    
+    wp_enqueue_script('bootstrap-js', 'https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js', array('jquery'), null, true);
+}
+add_action('wp_enqueue_scripts', 'add_bootstrap_to_wp');
+function enqueue_owl_carousel_assets() {
+    wp_enqueue_style('owl-carousel-css', 'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css');
+    wp_enqueue_style('owl-theme-default-css', 'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css');
+
     wp_enqueue_script('jquery');
-
-    // Thêm Owl Carousel CSS
-    wp_enqueue_style('owl-carousel-css', 'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css', array(), '2.3.4');
-    wp_enqueue_style('owl-carousel-theme', 'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css', array(), '2.3.4');
-
-    // Thêm Owl Carousel JS
-    wp_enqueue_script('owl-carousel-js', 'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js', array('jquery'), '2.3.4', true);
-
-    // Thêm script khởi tạo Owl Carousel
-    wp_add_inline_script('owl-carousel-js', "
+    
+    wp_enqueue_script('owl-carousel-js', 'https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js', array('jquery'), null, true);
+    
+    wp_add_inline_script('owl-carousel-js', '
         jQuery(document).ready(function($) {
-            $('.owl-carousel').owlCarousel({
-                loop: true,
-                margin: 10,
-                nav: true,
-                autoplay: true,
-                autoplayTimeout: 3000,
-                responsive: {
-                    0: { items: 1 },
-                    600: { items: 2 },
-                    1000: { items: 3 }
-                }
+            $(".owl-carousel").each(function() {
+                var columns = $(this).data("columns") || 3; // Lấy số cột từ thuộc tính data-columns, mặc định là 3 nếu không có
+                $(this).owlCarousel({
+                    items: columns,
+                    loop: true,
+                    margin: 10,
+                    nav: true,
+                    autoplay: true,
+                    autoplayTimeout: 3000,
+                    responsive: {
+                        0: {
+                            items: 1
+                        },
+                        600: {
+                            items: 2
+                        },
+                        1000: {
+                            items: columns
+                        }
+                    }
+                });
             });
         });
-    ");
+    ');
 }
-add_action('wp_enqueue_scripts', 'enqueue_owl_carousel');
+add_action('wp_enqueue_scripts', 'enqueue_owl_carousel_assets');
+function custom_owl_carousel_shortcode($atts) {
+    $atts = shortcode_atts(array(
+        'category' => '', 
+        'limit' => 5,
+        'columns' => 3,
+    ), $atts, 'owl_carousel');
+
+    if (empty($atts['category'])) {
+        return '<p>Please specify a category.</p>';
+    }
+
+    $args = array(
+        'post_type' => 'product',
+        'posts_per_page' => $atts['limit'],
+        'tax_query' => array(
+            array(
+                'taxonomy' => 'product_cat',
+                'field' => 'slug',
+                'terms' => $atts['category'],
+                'operator' => 'IN',
+            ),
+        ),
+    );
+    $query = new WP_Query($args);
+
+    if ($query->have_posts()) {
+        $output = '<div class="owl-carousel owl-theme" data-columns="' . esc_attr($atts['columns']) . '">';
+        
+        while ($query->have_posts()) {
+            $query->the_post();
+            global $product;
+            $output .= '<div class="item">';
+            $output .= '<a href="' . get_permalink() . '">';
+            $output .= woocommerce_get_product_thumbnail();
+            $output .= '<h2>' . get_the_title() . '</h2>';
+            $output .= '<span>' . $product->get_price_html() . '</span>';
+            $output .= '</a>';
+            $output .= '</div>';
+        }
+        
+        $output .= '</div>';
+        
+        wp_reset_postdata();
+        
+        return $output;
+    }
+
+    return '<p>No products found</p>';
+}
+
+add_shortcode('owl_carousel', 'custom_owl_carousel_shortcode');
