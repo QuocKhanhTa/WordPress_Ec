@@ -291,22 +291,18 @@ function enqueue_owl_carousel_assets() {
     wp_add_inline_script('owl-carousel-js', '
         jQuery(document).ready(function($) {
             $(".owl-carousel").each(function() {
-                var columns = $(this).data("columns") || 3; // Lấy số cột từ thuộc tính data-columns, mặc định là 3 nếu không có
+                var columns = $(this).data("columns") || 3;
                 $(this).owlCarousel({
                     items: columns,
                     loop: true,
-                    margin: 10,
+					dots: false,
+                    margin: 5,
                     nav: true,
-                    autoplay: true,
-                    autoplayTimeout: 3000,
                     responsive: {
                         0: {
-                            items: 1
-                        },
-                        600: {
                             items: 2
                         },
-                        1000: {
+                        768: {
                             items: columns
                         }
                     }
@@ -348,10 +344,10 @@ function custom_owl_carousel_shortcode($atts) {
             $query->the_post();
             global $product;
             $output .= '<div class="item">';
-            $output .= '<a href="' . get_permalink() . '">';
+            $output .= '<a style="text-decoration: none" href="' . get_permalink() . '">';
             $output .= woocommerce_get_product_thumbnail();
-            $output .= '<h2>' . get_the_title() . '</h2>';
-            $output .= '<span>' . $product->get_price_html() . '</span>';
+            $output .= '<h2 style="font-size: 14px; margin: 1rem 0">' . get_the_title() . '</h2>';
+            $output .= '<span style="font-size: 16px; color: #d70018; font-weight: 600">' . $product->get_price_html() . '</span>';
             $output .= '</a>';
             $output .= '</div>';
         }
